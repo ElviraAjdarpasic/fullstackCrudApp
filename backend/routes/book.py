@@ -1,16 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException
 from sqlalchemy.orm import Session
 from database import SessionLocal, engine
-from models.book import Book as BookModel
-from schemas.book import Book, BookCreate
-from sqlalchemy.exc import NoResultFound
+from models.book import Book as BookModel  # SQLAlchemy-modellen
+from schemas.book import Book as BookSchema  # Pydantic-schemat
 
-# Skapa databasen om den inte finns
+# Skapa tabeller i databasen om de inte finns
 BookModel.metadata.create_all(bind=engine)
 
 router = APIRouter()
 
-# Dependency
+# Dependency för DB-session
 def get_db():
     db = SessionLocal()
     try:
@@ -18,28 +17,32 @@ def get_db():
     finally:
         db.close()
 
-# CRUD
-@router.post("/", response_model=Book)
-def create_book(book: BookCreate, db: Session = Depends(get_db)):
+# Hämta alla böcker
+@router.get("/")
+def get_books(db: Session = next(get_db())):
+    books = db.query(BookModel).all()
+    return books
+
+# Hämta en bok
+@router.get("/{book_id}")
+def get_book(book_id: int, db: Session = next(get_db())):
+    book = db.query(BookModel).filter(BookModel.id == book_id).first()
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+    return book
+
+# Skapa en ny bok
+@router.post("/")
+def create_book(book: BookSchema, db: Session = next(get_db())):
     db_book = BookModel(title=book.title, author=book.author)
     db.add(db_book)
     db.commit()
     db.refresh(db_book)
     return db_book
 
-@router.get("/", response_model=list[Book])
-def read_books(db: Session = Depends(get_db)):
-    return db.query(BookModel).all()
-
-@router.get("/{book_id}", response_model=Book)
-def read_book(book_id: int, db: Session = Depends(get_db)):
-    book = db.query(BookModel).filter(BookModel.id == book_id).first()
-    if not book:
-        raise HTTPException(status_code=404, detail="Book not found")
-    return book
-
-@router.put("/{book_id}", response_model=Book)
-def update_book(book_id: int, book: BookCreate, db: Session = Depends(get_db)):
+# Uppdatera en bok
+@router.put("/{book_id}")
+def update_book(book_id: int, book: BookSchema, db: Session = next(get_db())):
     db_book = db.query(BookModel).filter(BookModel.id == book_id).first()
     if not db_book:
         raise HTTPException(status_code=404, detail="Book not found")
@@ -49,8 +52,9 @@ def update_book(book_id: int, book: BookCreate, db: Session = Depends(get_db)):
     db.refresh(db_book)
     return db_book
 
+# Ta bort en bok
 @router.delete("/{book_id}")
-def delete_book(book_id: int, db: Session = Depends(get_db)):
+def delete_book(book_id: int, db: Session = next(get_db())):
     db_book = db.query(BookModel).filter(BookModel.id == book_id).first()
     if not db_book:
         raise HTTPException(status_code=404, detail="Book not found")

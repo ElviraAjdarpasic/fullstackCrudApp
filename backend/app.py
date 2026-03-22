@@ -1,10 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routes.book import router as book_router 
+from routes.book import router as book_router
 
 app = FastAPI()
 
-# CORS för frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -13,4 +12,4 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(book_router)
+app.include_router(book_router, prefix="/books")
