@@ -4,6 +4,7 @@ from routes.book import router as book_router
 
 app = FastAPI()
 
+# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -12,4 +13,5 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Routes
 app.include_router(book_router, prefix="/books")
