@@ -1,10 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routes.todo import router as todo_router
+from routes import router as todo_router
 
 app = FastAPI()
 
-# CORS (låter frontend prata med backend)
+# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -13,5 +13,4 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Routes
-app.include_router(todo_router, prefix="/todos")
+app.include_router(todo_router)

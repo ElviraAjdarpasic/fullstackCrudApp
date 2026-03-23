@@ -1,14 +1,14 @@
 from pydantic import BaseModel
 
-class BookBase(BaseModel):
+class TodoBase(BaseModel):
     title: str
-    author: str
+    description: str | None = None
 
-class BookCreate(BookBase):
+class TodoCreate(TodoBase):
     pass
 
-class Book(BookBase):
+class Todo(TodoBase):
     id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True

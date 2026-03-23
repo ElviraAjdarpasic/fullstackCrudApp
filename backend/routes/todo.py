@@ -1,13 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import SessionLocal, engine
-from models.todo import Todo as TodoModel
-from schemas.todo import Todo, TodoCreate
+import models, schemas
+
+# Skapa tabeller
+models.Base.metadata.create_all(bind=engine)
 
 router = APIRouter()
 
-TodoModel.metadata.create_all(bind=engine)
-
+# Dependency
 def get_db():
     db = SessionLocal()
     try:
@@ -15,39 +16,36 @@ def get_db():
     finally:
         db.close()
 
-# GET alla todos
-@router.get("/", response_model=list[Todo])
-def get_todos(db: Session = Depends(get_db)):
-    return db.query(TodoModel).all()
+# Sections
+@router.get("/sections/", response_model=list[schemas.Section])
+def get_sections(db: Session = Depends(get_db)):
+    return db.query(models.Section).all()
 
-# POST skapa todo
-@router.post("/", response_model=Todo)
-def create_todo(todo: TodoCreate, db: Session = Depends(get_db)):
-    db_todo = TodoModel(task=todo.task, completed=todo.completed)
+@router.post("/sections/", response_model=schemas.Section)
+def create_section(section: schemas.SectionCreate, db: Session = Depends(get_db)):
+    db_section = models.Section(title=section.title)
+    db.add(db_section)
+    db.commit()
+    db.refresh(db_section)
+    return db_section
+
+# Todos
+@router.post("/sections/{section_id}/todos/", response_model=schemas.Todo)
+def create_todo(section_id: int, todo: schemas.TodoCreate, db: Session = Depends(get_db)):
+    db_section = db.query(models.Section).filter(models.Section.id == section_id).first()
+    if not db_section:
+        raise HTTPException(status_code=404, detail="Section not found")
+    db_todo = models.Todo(content=todo.content, section_id=section_id)
     db.add(db_todo)
     db.commit()
     db.refresh(db_todo)
     return db_todo
 
-# DELETE todo
-@router.delete("/{todo_id}")
+@router.delete("/todos/{todo_id}")
 def delete_todo(todo_id: int, db: Session = Depends(get_db)):
-    todo = db.query(TodoModel).filter(TodoModel.id == todo_id).first()
-    if not todo:
+    db_todo = db.query(models.Todo).filter(models.Todo.id == todo_id).first()
+    if not db_todo:
         raise HTTPException(status_code=404, detail="Todo not found")
-    
-    db.delete(todo)
+    db.delete(db_todo)
     db.commit()
-    return {"message": "Deleted"}
-
-# TOGGLE completed
-@router.put("/{todo_id}")
-def toggle_todo(todo_id: int, db: Session = Depends(get_db)):
-    todo = db.query(TodoModel).filter(TodoModel.id == todo_id).first()
-    if not todo:
-        raise HTTPException(status_code=404, detail="Todo not found")
-    
-    todo.completed = not todo.completed
-    db.commit()
-    db.refresh(todo)
-    return todo
+    return {"detail": "Todo deleted"}
