@@ -1,10 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routes import router as todo_router
+from routes.todo import router as todo_router
 
-app = FastAPI()
+app = FastAPI(title="Todo Fullstack App")
 
-# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -13,4 +12,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(todo_router)
+app.include_router(todo_router, prefix="/todolists", tags=["todolists"])
+
+@app.get("/")
+def root():
+    return {
+        "message": "Todo API är igång",
+        "docs": "/docs"
+    }
+
+@app.get("/health")
+def health_check():
+    return {"status": "healthy"}

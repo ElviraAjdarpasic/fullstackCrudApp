@@ -1,14 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from database import SessionLocal, engine
-import models, schemas
+from typing import List
 
-# Skapa tabeller
-models.Base.metadata.create_all(bind=engine)
+from database import SessionLocal, engine
+from models.todo import Base, Todo, TodoList
+from schemas.todo import TodoCreate, TodoListCreate, TodoList as TodoListSchema
+
+Base.metadata.create_all(bind=engine)
 
 router = APIRouter()
 
-# Dependency
 def get_db():
     db = SessionLocal()
     try:
@@ -16,36 +17,58 @@ def get_db():
     finally:
         db.close()
 
-# Sections
-@router.get("/sections/", response_model=list[schemas.Section])
-def get_sections(db: Session = Depends(get_db)):
-    return db.query(models.Section).all()
+@router.get("/", response_model=List[TodoListSchema])
+def read_todolists(db: Session = Depends(get_db)):
+    return db.query(TodoList).all()
 
-@router.post("/sections/", response_model=schemas.Section)
-def create_section(section: schemas.SectionCreate, db: Session = Depends(get_db)):
-    db_section = models.Section(title=section.title)
-    db.add(db_section)
+@router.post("/", response_model=TodoListSchema)
+def create_todolist(todo_list: TodoListCreate, db: Session = Depends(get_db)):
+    db_list = TodoList(title=todo_list.title)
+    db.add(db_list)
     db.commit()
-    db.refresh(db_section)
-    return db_section
+    db.refresh(db_list)
+    return db_list
 
-# Todos
-@router.post("/sections/{section_id}/todos/", response_model=schemas.Todo)
-def create_todo(section_id: int, todo: schemas.TodoCreate, db: Session = Depends(get_db)):
-    db_section = db.query(models.Section).filter(models.Section.id == section_id).first()
-    if not db_section:
-        raise HTTPException(status_code=404, detail="Section not found")
-    db_todo = models.Todo(content=todo.content, section_id=section_id)
+@router.post("/{list_id}/todos", response_model=TodoListSchema)
+def create_todo_for_list(list_id: int, todo: TodoCreate, db: Session = Depends(get_db)):
+    db_list = db.query(TodoList).filter(TodoList.id == list_id).first()
+    if not db_list:
+        raise HTTPException(status_code=404, detail="Listan hittades inte")
+    db_todo = Todo(content=todo.content, list=db_list, done=False)
     db.add(db_todo)
     db.commit()
-    db.refresh(db_todo)
-    return db_todo
+    db.refresh(db_list)
+    return db_list
 
-@router.delete("/todos/{todo_id}")
-def delete_todo(todo_id: int, db: Session = Depends(get_db)):
-    db_todo = db.query(models.Todo).filter(models.Todo.id == todo_id).first()
-    if not db_todo:
-        raise HTTPException(status_code=404, detail="Todo not found")
-    db.delete(db_todo)
+@router.delete("/{list_id}", response_model=dict)
+def delete_todolist(list_id: int, db: Session = Depends(get_db)):
+    db_list = db.query(TodoList).filter(TodoList.id == list_id).first()
+    if not db_list:
+        raise HTTPException(status_code=404, detail="Listan hittades inte")
+    db.delete(db_list)
     db.commit()
-    return {"detail": "Todo deleted"}
+    return {"message": "Lista borttagen"}
+
+@router.delete("/{list_id}/todos/{todo_id}", response_model=TodoListSchema)
+def delete_todo(list_id: int, todo_id: int, db: Session = Depends(get_db)):
+    todo = db.query(Todo).filter(Todo.id == todo_id).first()
+    if not todo:
+        raise HTTPException(status_code=404, detail="Todo hittades inte")
+    db.delete(todo)
+    db.commit()
+    todolist = db.query(TodoList).filter(TodoList.id == list_id).first()
+    if todolist:
+        db.refresh(todolist)
+        return todolist
+    return {"message": "Todo borttagen"}
+
+@router.patch("/{list_id}/todos/{todo_id}/complete", response_model=TodoListSchema)
+def toggle_complete(list_id: int, todo_id: int, db: Session = Depends(get_db)):
+    todo = db.query(Todo).filter(Todo.id == todo_id, Todo.list_id == list_id).first()
+    if not todo:
+        raise HTTPException(status_code=404, detail="Todo hittades inte")
+    todo.done = not todo.done
+    db.commit()
+    todolist = db.query(TodoList).filter(TodoList.id == list_id).first()
+    db.refresh(todolist)
+    return todolist
