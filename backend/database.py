@@ -1,17 +1,11 @@
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, declarative_base
 
-# SQLite-databas (filbaserad)
-SQLALCHEMY_DATABASE_URL = "sqlite:///./books.db"
+SQLALCHEMY_DATABASE_URL = "sqlite:///./books.db"  # du kan ändra till postgres/mysqldb senare
 
-# Skapa engine
 engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
+    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}  # bara för sqlite
 )
-
-# SessionLocal används för att skapa DB-sessioner
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Bas-klass för modeller
 Base = declarative_base()

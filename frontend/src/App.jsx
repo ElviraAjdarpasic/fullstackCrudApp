@@ -5,7 +5,7 @@ function App() {
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
 
-  // Hämta böcker
+  // Hämta böcker från backend
   const fetchBooks = async () => {
     const res = await fetch("http://127.0.0.1:8000/books/");
     const data = await res.json();
@@ -31,36 +31,26 @@ function App() {
     fetchBooks();
   };
 
-  // Ta bort bok
-  const deleteBook = async (id) => {
-    await fetch(`http://127.0.0.1:8000/books/${id}`, {
-      method: "DELETE",
-    });
-
-    fetchBooks();
-  };
-
   return (
     <div style={{ padding: "20px" }}>
-      <h1>📚 Books</h1>
+      <h1>📚 Mina Böcker</h1>
 
       <input
-        placeholder="Title"
+        placeholder="Titel"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
       />
       <input
-        placeholder="Author"
+        placeholder="Författare"
         value={author}
         onChange={(e) => setAuthor(e.target.value)}
       />
-      <button onClick={addBook}>Add</button>
+      <button onClick={addBook}>Lägg till</button>
 
       <ul>
         {books.map((book) => (
           <li key={book.id}>
             {book.title} - {book.author}
-            <button onClick={() => deleteBook(book.id)}>❌</button>
           </li>
         ))}
       </ul>
