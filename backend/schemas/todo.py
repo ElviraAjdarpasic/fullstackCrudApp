@@ -1,19 +1,22 @@
 from pydantic import BaseModel
 from typing import List
 
-# Scheman för Todo
+# Scheman för enskild Todo
 class TodoBase(BaseModel):
     content: str
 
 class TodoCreate(TodoBase):
     pass
 
+# Uppdaterad Todo med completed-fält
 class Todo(TodoBase):
     id: int
     list_id: int
+    completed: bool = False          
 
     class Config:
-        from_attributes = True  # orm_mode i Pydantic v2
+        from_attributes = True     
+
 
 # Scheman för TodoList
 class TodoListBase(BaseModel):
@@ -24,7 +27,7 @@ class TodoListCreate(TodoListBase):
 
 class TodoList(TodoListBase):
     id: int
-    todos: List[Todo] = []  # tom lista som default
+    todos: List[Todo] = []          
 
     class Config:
         from_attributes = True
