@@ -23,6 +23,14 @@ def read_todolists(db: Session = Depends(get_db)):
     return db.query(TodoList).order_by(TodoList.id.desc()).all()
 
 
+@router.get("/{list_id}", response_model=TodoListSchema)
+def read_todolist(list_id: int, db: Session = Depends(get_db)):
+    db_list = db.query(TodoList).filter(TodoList.id == list_id).first()
+    if not db_list:
+        raise HTTPException(status_code=404, detail="Listan hittades inte")
+    return db_list
+
+
 @router.post("/", response_model=TodoListSchema)
 def create_todolist(todo_list: TodoListCreate, db: Session = Depends(get_db)):
     title = todo_list.title.strip()
@@ -30,6 +38,21 @@ def create_todolist(todo_list: TodoListCreate, db: Session = Depends(get_db)):
         title = title[0].upper() + title[1:].lower()
     db_list = TodoList(title=title)
     db.add(db_list)
+    db.commit()
+    db.refresh(db_list)
+    return db_list
+
+
+@router.put("/{list_id}", response_model=TodoListSchema)
+def update_todolist(list_id: int, todo_list: TodoListCreate, db: Session = Depends(get_db)):
+    db_list = db.query(TodoList).filter(TodoList.id == list_id).first()
+    if not db_list:
+        raise HTTPException(status_code=404, detail="Listan hittades inte")
+    
+    title = todo_list.title.strip()
+    if title:
+        title = title[0].upper() + title[1:].lower()
+    db_list.title = title
     db.commit()
     db.refresh(db_list)
     return db_list
