@@ -5,6 +5,8 @@ function App() {
   const [todoLists, setTodoLists] = useState([]);
   const [newListTitle, setNewListTitle] = useState("");
   const [newTodoText, setNewTodoText] = useState({});
+  const [editingTodo, setEditingTodo] = useState(null);
+  const [editingList, setEditingList] = useState(null);
 
   const fetchTodoLists = async () => {
     try {
@@ -55,13 +57,59 @@ function App() {
     }
   };
 
+  const updateTodo = async (listId, todoId, newContent) => {
+    if (!newContent?.trim()) {
+      setEditingTodo(null);
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        `http://127.0.0.1:8000/todolists/${listId}/todos/${todoId}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content: newContent.trim() }),
+        }
+      );
+
+      if (!res.ok) throw new Error("Kunde inte uppdatera todo");
+      
+      setEditingTodo(null);
+      fetchTodoLists();
+    } catch (err) {
+      console.error("Fel vid uppdatering av todo:", err);
+      alert("Något gick fel när todo skulle uppdateras");
+    }
+  };
+
+  const updateListTitle = async (listId, newTitle) => {
+    if (!newTitle?.trim()) {
+      setEditingList(null);
+      return;
+    }
+
+    try {
+      const res = await fetch(`http://127.0.0.1:8000/todolists/${listId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: newTitle.trim() }),
+      });
+
+      if (!res.ok) throw new Error("Kunde inte uppdatera rubrik");
+      
+      setEditingList(null);
+      fetchTodoLists();
+    } catch (err) {
+      console.error("Fel vid uppdatering av rubrik:", err);
+      alert("Något gick fel när rubriken skulle uppdateras");
+    }
+  };
+
   const deleteTodoList = async (listId) => {
     if (!window.confirm("Ta bort hela listan?")) return;
     try {
-      const res = await fetch(`http://127.0.0.1:8000/todolists/${listId}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) throw new Error("Kunde inte ta bort lista");
+      await fetch(`http://127.0.0.1:8000/todolists/${listId}`, { method: "DELETE" });
       fetchTodoLists();
     } catch (err) {
       console.error(err);
@@ -71,10 +119,7 @@ function App() {
   const deleteTodo = async (listId, todoId) => {
     if (!window.confirm("Ta bort todo?")) return;
     try {
-      const res = await fetch(`http://127.0.0.1:8000/todolists/${listId}/todos/${todoId}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) throw new Error("Kunde inte ta bort todo");
+      await fetch(`http://127.0.0.1:8000/todolists/${listId}/todos/${todoId}`, { method: "DELETE" });
       fetchTodoLists();
     } catch (err) {
       console.error(err);
@@ -83,13 +128,18 @@ function App() {
 
   const toggleComplete = async (listId, todoId) => {
     try {
-      const res = await fetch(`http://127.0.0.1:8000/todolists/${listId}/todos/${todoId}/complete`, {
+      await fetch(`http://127.0.0.1:8000/todolists/${listId}/todos/${todoId}/complete`, {
         method: "PATCH",
       });
-      if (!res.ok) throw new Error("Kunde inte uppdatera status");
       fetchTodoLists();
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const handleNewTodoKeyDown = (e, listId) => {
+    if (e.key === "Enter") {
+      addTodo(listId);
     }
   };
 
@@ -115,15 +165,55 @@ function App() {
             alignItems: "center",
             marginBottom: "24px"
           }}>
-            <h2 style={{ margin: 0, textAlign: "center", flex: 1 }}>
-              {list.title}
-            </h2>
-            <button
-              onClick={() => deleteTodoList(list.id)}
-              className="delete-list-btn"
-            >
-              Ta bort lista
-            </button>
+            {editingList === list.id ? (
+              <input
+                type="text"
+                defaultValue={list.title}
+                autoFocus
+                onBlur={(e) => updateListTitle(list.id, e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") updateListTitle(list.id, e.target.value);
+                  if (e.key === "Escape") setEditingList(null);
+                }}
+                style={{
+                  flex: 1,
+                  padding: "8px 12px",
+                  fontSize: "1.75rem",
+                  fontWeight: 600,
+                  border: "2px solid #d81b60",
+                  borderRadius: "8px",
+                  marginRight: "12px"
+                }}
+              />
+            ) : (
+              <h2 style={{ margin: 0, textAlign: "center", flex: 1 }}>
+                {list.title}
+              </h2>
+            )}
+
+            <div style={{ display: "flex", gap: "8px" }}>
+              {editingList !== list.id && (
+                <button
+                  onClick={() => setEditingList(list.id)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    fontSize: "1.6rem",
+                    color: "#d81b60",
+                    cursor: "pointer",
+                  }}
+                >
+                  ✏️
+                </button>
+              )}
+
+              <button
+                onClick={() => deleteTodoList(list.id)}
+                className="delete-list-btn"
+              >
+                Ta bort lista
+              </button>
+            </div>
           </div>
 
           <div className="todos">
@@ -132,16 +222,64 @@ function App() {
                 className={`todo ${todo.completed ? "completed" : ""}`}
                 key={todo.id}
               >
-                <span>{todo.content}</span>
-                <div>
+                {editingTodo?.listId === list.id && editingTodo?.todoId === todo.id ? (
+                  <input
+                    type="text"
+                    defaultValue={todo.content}
+                    autoFocus
+                    onBlur={(e) => updateTodo(list.id, todo.id, e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") updateTodo(list.id, todo.id, e.target.value);
+                      if (e.key === "Escape") setEditingTodo(null);
+                    }}
+                    style={{
+                      flex: 1,
+                      padding: "8px 12px",
+                      border: "2px solid #d81b60",
+                      borderRadius: "8px",
+                      fontSize: "1.1rem"
+                    }}
+                  />
+                ) : (
+                  <span className={todo.completed ? "completed-text" : ""}>
+                    {todo.content}
+                  </span>
+                )}
+
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                   <button
                     className="complete-btn"
                     onClick={() => toggleComplete(list.id, todo.id)}
                   >
                     ✓
                   </button>
+
+                  {!(editingTodo?.listId === list.id && editingTodo?.todoId === todo.id) && (
+                    <button
+                      onClick={() => setEditingTodo({ listId: list.id, todoId: todo.id })}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        fontSize: "1.55rem",
+                        color: "#d81b60",
+                        cursor: "pointer",
+                        padding: "4px 6px",
+                      }}
+                    >
+                      ✏️
+                    </button>
+                  )}
+
                   <button
                     onClick={() => deleteTodo(list.id, todo.id)}
+                    style={{ 
+                      background: "none", 
+                      border: "none", 
+                      color: "#c2185b", 
+                      fontSize: "1.7rem",
+                      cursor: "pointer",
+                      padding: "4px 6px",
+                    }}
                   >
                     ×
                   </button>
@@ -158,6 +296,9 @@ function App() {
               onChange={(e) =>
                 setNewTodoText({ ...newTodoText, [list.id]: e.target.value })
               }
+              onKeyDown={(e) => {
+                if (e.key === "Enter") addTodo(list.id);
+              }}
             />
             <button onClick={() => addTodo(list.id)}>Lägg till</button>
           </div>

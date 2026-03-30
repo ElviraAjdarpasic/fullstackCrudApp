@@ -33,21 +33,18 @@ h1 {
   border: 1px solid rgba(255, 182, 193, 0.3);
 }
 
-.new-list input,
-.new-todo input {
+.new-list input {
   flex: 1;
   padding: 14px 18px;
   border: 1px solid #ffb3c6;
   border-radius: 12px;
   font-size: 1.05rem;
   background: white;
-  color: #111;
-  caret-color: #d81b60;
+  color: #1a1a1a;
   transition: all 0.2s;
 }
 
-.new-list input:focus,
-.new-todo input:focus {
+.new-list input:focus {
   outline: none;
   border-color: #d81b60;
   box-shadow: 0 0 0 3px rgba(216, 27, 96, 0.15);
@@ -106,16 +103,14 @@ h1 {
   background: rgba(255, 240, 245, 0.6);
   border-radius: 12px;
   font-size: 1.1rem;
-  color: #111;
+  color: #1a1a1a;
   border-left: 4px solid #ffb3c6;
   transition: all 0.2s;
 }
 
 .todo.completed {
-  background: rgba(232, 245, 233, 0.8);
+  background: rgba(232, 245, 233, 0.7);
   border-left: 4px solid #4caf50;
-  text-decoration: line-through;
-  color: #444;
 }
 
 .todo:hover {
@@ -144,23 +139,37 @@ h1 {
   background: none;
   border: none;
   color: #4caf50;
-  font-size: 1.6rem;
-  font-weight: bold;
+  font-size: 1.5rem;
   cursor: pointer;
   padding: 4px 10px;
-  line-height: 1;
   transition: all 0.2s;
 }
 
 .complete-btn:hover {
-  color: #2e7d32;
-  transform: scale(1.2);
+  color: #388e3c;
+  transform: scale(1.15);
 }
 
 .new-todo {
   display: flex;
   gap: 12px;
   margin-top: 20px;
+}
+
+.new-todo input {
+  flex: 1;
+  padding: 14px 18px;
+  border: 1px solid #ffb3c6;
+  border-radius: 12px;
+  font-size: 1.05rem;
+  background: white;
+  color: #1a1a1a;
+}
+
+.new-todo input:focus {
+  outline: none;
+  border-color: #d81b60;
+  box-shadow: 0 0 0 3px rgba(216, 27, 96, 0.15);
 }
 
 .delete-list-btn {
@@ -177,6 +186,12 @@ h1 {
 
 .delete-list-btn:hover {
   background: #c2185b;
+}
+
+/* Fix för att bara texten ska strykas */
+.completed-text {
+  text-decoration: line-through;
+  color: #555;
 }
 
 @media (max-width: 640px) {

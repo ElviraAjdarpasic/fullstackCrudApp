@@ -75,6 +75,26 @@ def create_todo_for_list(list_id: int, todo: TodoCreate, db: Session = Depends(g
     return db_list
 
 
+# PUT för att redigera todo (denna är viktig)
+@router.put("/{list_id}/todos/{todo_id}", response_model=TodoListSchema)
+def update_todo(list_id: int, todo_id: int, todo_update: TodoCreate, db: Session = Depends(get_db)):
+    todo = db.query(Todo).filter(Todo.id == todo_id, Todo.list_id == list_id).first()
+    if not todo:
+        raise HTTPException(status_code=404, detail="Todo hittades inte")
+    
+    content = todo_update.content.strip()
+    if content:
+        content = content[0].upper() + content[1:].lower()
+    
+    todo.content = content
+    db.commit()
+    db.refresh(todo)
+    
+    todolist = db.query(TodoList).filter(TodoList.id == list_id).first()
+    db.refresh(todolist)
+    return todolist
+
+
 @router.delete("/{list_id}", response_model=dict)
 def delete_todolist(list_id: int, db: Session = Depends(get_db)):
     db_list = db.query(TodoList).filter(TodoList.id == list_id).first()
