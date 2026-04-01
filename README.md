@@ -15,6 +15,7 @@ En komplett fullstack todo-applikation byggd med **FastAPI** (backend) och **Rea
 - **Frontend**: React, JavaScript (Fetch API), CSS
 
 ## Projektstruktur
+```bash
 fullstackapp/
 ├── backend/
 │   ├── app.py
@@ -28,6 +29,5 @@ fullstackapp/
 │   ├── package.json
 │   └── vite.config.js
 └── README.md
-
 ## Hur du startar applikationen
 
