@@ -29,5 +29,4 @@ fullstackapp/
 │   ├── package.json
 │   └── vite.config.js
 └── README.md
-## Hur du startar applikationen
 
