@@ -6,8 +6,6 @@ En komplett fullstack todo-applikation byggd med **FastAPI** (backend) och **Rea
 - Skapa och hantera flera todolistor
 - Lägga till, redigera, bocka av och ta bort uppgifter (todos)
 - Redigera både listans titel och enskilda todos
-- Markera uppgifter som klara med ✓
-- Stöd för Enter-tangent vid tillägg av nya todos
 - Snygg och responsiv design
 
 ## Teknikstack
