@@ -1,6 +1,6 @@
-# Todo Fullstack Applikation
-# Elvira Ajdarpasic
+# FullstackApp
 
+**Elvira Ajdarpasic**
 
 En komplett fullstack todo-applikation byggd med **FastAPI** (backend) och **React** (frontend).
 
@@ -15,6 +15,7 @@ En komplett fullstack todo-applikation byggd med **FastAPI** (backend) och **Rea
 - **Frontend**: React, JavaScript (Fetch API), CSS
 
 ## Projektstruktur
+
 ```bash
 fullstackapp/
 ├── backend/
